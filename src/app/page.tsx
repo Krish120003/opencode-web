@@ -63,15 +63,15 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-neutral-900 text-white">
       {/* Hero Section - Instructions */}
-      <div className="flex w-full items-center justify-center pt-8 text-[0.5em] md:pt-16 md:text-base">
+      <div className="container mx-auto flex w-full items-center justify-center px-4 pt-8 text-[0.5em] md:justify-start md:pt-16 md:text-base">
         <pre className="">{asciiArtTitle}</pre>
       </div>
 
       <div className="container mx-auto px-4 py-16 font-mono">
         {/* Try It Out Section */}
         <div>
-          <h2 className="mb-8 text-center text-3xl font-bold">Try It Out</h2>
-          <p className="mb-8 text-center text-gray-300">
+          <h2 className="mb-2 text-left text-3xl font-bold">Try It Out</h2>
+          <p className="mb-2 text-left text-gray-300">
             Click any repository below to get started
           </p>
 
@@ -81,12 +81,14 @@ export default function Home() {
                 key={`${repo.owner}/${repo.repo}`}
                 href={`/${repo.owner}/${repo.repo}`}
                 prefetch={false}
-                className="border border-white/20 p-2"
+                className="group border border-white/20 p-2 hover:bg-white"
               >
-                <h3 className="font-mono text-lg font-bold group-hover:text-white">
+                <h3 className="font-mono text-lg font-bold group-hover:text-black">
                   {repo.owner}/{repo.repo}
                 </h3>
-                <p className="text-sm text-gray-400">{repo.description}</p>
+                <p className="text-sm text-gray-400 group-hover:text-gray-800">
+                  {repo.description}
+                </p>
               </Link>
             ))}
           </div>
