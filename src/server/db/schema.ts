@@ -106,3 +106,16 @@ export const verificationTokens = createTable(
   }),
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
+
+export const sandboxes = createTable("vercel_sandboxes", (d) => ({
+  id: d.varchar({ length: 255 }).notNull().primaryKey(),
+  owner: d.varchar({ length: 255 }).notNull(),
+  repo: d.varchar({ length: 255 }).notNull(),
+  createdAt: d
+    .timestamp({ withTimezone: true })
+    .$defaultFn(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  diedAt: d.timestamp({ withTimezone: true }),
+  url: d.varchar({ length: 255 }).notNull(),
+}));

@@ -1,10 +1,10 @@
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { api, HydrateClient } from "~/trpc/server";
-import { SandboxControls } from "./_components/sandbox-controls";
-import { SandboxPtty } from "./_components/sandbox-ptty";
+import { SandboxTerminal } from "./_components/sandbox-terminal-client";
 import { Suspense } from "react";
 import { loadSandboxSearchParams } from "~/lib";
+import { SandboxLoading } from "./_components/loading-animated";
+import { SandboxStatus } from "./_components/sandbox-status";
 
 interface PageProps {
   searchParams: Promise<{
@@ -36,7 +36,9 @@ async function SandboxHeader(props: SandboxHeaderProps) {
         />
         {props.owner} / {props.repo}
       </a>
-      <div>TOOD Sandbox Status</div>
+      <div>
+        <SandboxStatus />
+      </div>
     </div>
   );
 }
@@ -46,23 +48,12 @@ export default async function RepoPage({ params, searchParams }: PageProps) {
   const { sandbox: sandboxId } = loadSandboxSearchParams(await searchParams);
 
   // Fetch sandbox status and repo metadata in parallel
-  let [sandboxUrl, repoData] = await Promise.all([
-    sandboxId
-      ? (await api.sandbox.getStatus({ sandboxId })).ttydUrl
-      : Promise.resolve(null),
+  let [repoData] = await Promise.all([
     api.repo.getRepoMetadata({ owner, repo }).catch(() => null),
   ]);
 
   if (!repoData) {
     return notFound();
-  }
-
-  if (!sandboxUrl) {
-    const sandboxData = await api.sandbox.create({ owner, repo });
-    // redirect to include sandbox ID in URL
-    return redirect(
-      `/${owner}/${repo}?sandbox=${encodeURIComponent(sandboxData.id)}`,
-    );
   }
 
   return (
@@ -78,9 +69,7 @@ export default async function RepoPage({ params, searchParams }: PageProps) {
         <div></div>
         {/* <SandboxControls owner={owner} repo={repo} /> */}
         <div className="h-[calc(100%-var(--spacing)*10)] w-full bg-transparent">
-          <Suspense fallback={<div>Loading Sandbox...</div>}>
-            <SandboxPtty url={sandboxUrl} />
-          </Suspense>
+          <SandboxTerminal owner={owner} repo={repo} />
         </div>
       </main>
     </HydrateClient>

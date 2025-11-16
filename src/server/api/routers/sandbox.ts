@@ -2,15 +2,11 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { Sandbox } from "@vercel/sandbox";
 import ms from "ms";
+import { sandboxes } from "~/server/db/schema";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { env } from "~/env";
 
-// Store active sandboxes in memory (in production, use a database)
-const activeSandboxes = new Map<
-  string,
-  { id: string; ttydUrl: string; createdAt: Date }
->();
+import { eq } from "drizzle-orm";
 
 export const sandboxRouter = createTRPCRouter({
   create: publicProcedure
@@ -20,7 +16,7 @@ export const sandboxRouter = createTRPCRouter({
         repo: z.string().min(1),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         console.log(
           "[Sandbox] Creating sandbox for",
@@ -82,11 +78,11 @@ export const sandboxRouter = createTRPCRouter({
         const ttydUrl = sbx.domain(7681);
         console.log("[Sandbox] ttyd available at:", ttydUrl);
 
-        // Store the sandbox info
-        activeSandboxes.set(sandboxId, {
+        await ctx.db.insert(sandboxes).values({
           id: sandboxId,
-          ttydUrl,
-          createdAt: new Date(),
+          owner: input.owner,
+          repo: input.repo,
+          url: ttydUrl,
         });
 
         return {
@@ -146,16 +142,69 @@ export const sandboxRouter = createTRPCRouter({
         sandboxId: z.string(),
       }),
     )
-    .query(async ({ input }) => {
-      const sandboxInfo = activeSandboxes.get(input.sandboxId);
+    .output(
+      z.object({
+        status: z.enum(["pending", "running", "stopped"]),
+        ttydUrl: z.string().nullable(),
+        duration: z.number().nullable(),
+        startedAt: z.date().nullable(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      // fetch from db
+      const sandboxRecord = await ctx.db.query.sandboxes.findFirst({
+        where: (sandboxes, { eq }) => eq(sandboxes.id, input.sandboxId),
+      });
+
+      if (!sandboxRecord) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Sandbox record not found in database",
+        });
+      }
+
+      if (sandboxRecord.diedAt !== null) {
+        return {
+          status: "stopped",
+          ttydUrl: null,
+          duration: null,
+          startedAt: null,
+        };
+      }
+
+      const sandboxInfo = await Sandbox.get({ sandboxId: input.sandboxId });
+
       if (!sandboxInfo) {
-        return { exists: false, ttydUrl: null };
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Sandbox not found",
+        });
+      }
+
+      if (
+        sandboxInfo.status === "stopped" ||
+        sandboxInfo.status === "failed" ||
+        sandboxInfo.status === "stopping"
+      ) {
+        // update db to mark as dead
+        await ctx.db
+          .update(sandboxes)
+          .set({ diedAt: new Date() })
+          .where(eq(sandboxes.id, input.sandboxId));
+
+        return {
+          status: "stopped",
+          ttydUrl: null,
+          duration: null,
+          startedAt: null,
+        };
       }
 
       return {
-        exists: true,
-        ttydUrl: sandboxInfo.ttydUrl,
-        createdAt: sandboxInfo.createdAt,
+        status: sandboxInfo.status,
+        ttydUrl: sandboxInfo.domain(7681),
+        duration: ms("5m"),
+        startedAt: sandboxRecord.createdAt,
       };
     }),
 });
