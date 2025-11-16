@@ -19,6 +19,8 @@ export function SandboxStatus() {
     },
   );
 
+  const utils = api.useUtils();
+
   // TODO: Rewrite nicely
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -39,6 +41,10 @@ export function SandboxStatus() {
           const duration = sandboxStatus.duration;
           const remaining = Math.max(duration - elaposed, 0);
           timerSpanRef.current.textContent = Math.floor(remaining / 1000) + "s";
+          if (remaining <= 0) {
+            // invalidate query to refetch status
+            utils.sandbox.getStatus.invalidate({ sandboxId: sandboxId! });
+          }
         }
       }, 1000);
     }
@@ -75,5 +81,6 @@ export function SandboxStatus() {
       </div>
     );
   }
-  return <div>{sandboxStatus && <div></div>}</div>;
+
+  return <div></div>;
 }
