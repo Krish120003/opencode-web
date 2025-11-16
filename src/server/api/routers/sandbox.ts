@@ -89,49 +89,28 @@ export const sandboxRouter = createTRPCRouter({
           id: sandboxId,
           ttydUrl,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("[Sandbox] Failed to create sandbox:", error);
+        const message =
+          error && typeof error === "object" && "message" in error
+            ? String(error.message)
+            : "Unknown error";
+        const stack =
+          error && typeof error === "object" && "stack" in error
+            ? String(error.stack)
+            : undefined;
+        const response =
+          error && typeof error === "object" && "response" in error
+            ? error.response
+            : undefined;
         console.error("[Sandbox] Error details:", {
-          message: error.message,
-          stack: error.stack,
-          response: error.response?.data,
+          message,
+          stack,
+          response,
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to create sandbox: ${error.message || "Unknown error"}`,
-        });
-      }
-    }),
-
-  stop: publicProcedure
-    .input(
-      z.object({
-        sandboxId: z.string(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      try {
-        const sandboxInfo = activeSandboxes.get(input.sandboxId);
-        if (!sandboxInfo) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Sandbox not found",
-          });
-        }
-
-        // Stop the sandbox using Sandbox.get() then .stop()
-        const sbx = await Sandbox.get({ sandboxId: input.sandboxId });
-        await sbx.stop();
-
-        // Remove from active sandboxes
-        activeSandboxes.delete(input.sandboxId);
-
-        return { success: true };
-      } catch (error: any) {
-        console.error("Failed to stop sandbox:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to stop sandbox",
+          message: `Failed to create sandbox: ${message}`,
         });
       }
     }),

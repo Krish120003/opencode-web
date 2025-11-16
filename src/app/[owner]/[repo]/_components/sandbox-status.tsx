@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { api } from "~/trpc/react";
 
 export function SandboxStatus() {
-  const [sandboxId, setSandbox] = useQueryState("sandbox");
+  const [sandboxId] = useQueryState("sandbox");
   const enableStatusQuery = Boolean(sandboxId);
 
   const timerSpanRef = useRef<HTMLSpanElement>(null);
@@ -43,7 +43,7 @@ export function SandboxStatus() {
           timerSpanRef.current.textContent = Math.floor(remaining / 1000) + "s";
           if (remaining <= 0) {
             // invalidate query to refetch status
-            utils.sandbox.getStatus.invalidate({ sandboxId: sandboxId! });
+            void utils.sandbox.getStatus.invalidate({ sandboxId: sandboxId! });
           }
         }
       }, 1000);
@@ -51,18 +51,13 @@ export function SandboxStatus() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [sandboxStatus]);
+  }, [sandboxStatus, sandboxId, utils.sandbox.getStatus]);
 
   if (!sandboxId) {
     return <div>Creating new sandbox...</div>;
   }
 
-  if (
-    isLoading ||
-    !sandboxStatus ||
-    !sandboxStatus.startedAt ||
-    !sandboxStatus.duration
-  ) {
+  if (isLoading || !sandboxStatus?.startedAt || !sandboxStatus.duration) {
     return <div>Loading...</div>;
   }
 

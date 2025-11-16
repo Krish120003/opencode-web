@@ -103,7 +103,7 @@ export default function Home() {
         >
           @dotkrish
         </a>{" "}
-        //{" "}
+        {"//"}{" "}
         <a
           href="https://krish.gg"
           className="underline hover:underline-offset-2"

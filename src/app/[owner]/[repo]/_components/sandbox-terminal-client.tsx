@@ -1,7 +1,6 @@
 "use client";
 import { useQueryState } from "nuqs";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { api } from "~/trpc/react";
 import { SandboxLoading } from "./loading-animated";
@@ -45,11 +44,11 @@ export function SandboxTerminal(props: SandboxTerminalProps) {
   // If no sandboxId, create one and redirect
   useEffect(() => {
     if (!sandboxId && !createMutation.isPending) {
-      createMutation.mutate(
+      void createMutation.mutate(
         { owner: props.owner, repo: props.repo },
         {
           onSuccess: (data) => {
-            setSandbox(data.id);
+            void setSandbox(data.id);
           },
         },
       );
@@ -62,7 +61,7 @@ export function SandboxTerminal(props: SandboxTerminalProps) {
   }
 
   if (!sandboxStatus?.ttydUrl) {
-    setSandbox(null);
+    void setSandbox(null);
 
     return (
       <div className="flex h-full w-full items-center justify-center">

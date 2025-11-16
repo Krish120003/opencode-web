@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import { api, HydrateClient } from "~/trpc/server";
 import { SandboxTerminal } from "./_components/sandbox-terminal-client";
-import { Suspense } from "react";
 import { loadSandboxSearchParams } from "~/lib";
-import { SandboxLoading } from "./_components/loading-animated";
 import { SandboxStatus } from "./_components/sandbox-status";
 
 interface PageProps {
@@ -45,10 +43,10 @@ async function SandboxHeader(props: SandboxHeaderProps) {
 
 export default async function RepoPage({ params, searchParams }: PageProps) {
   const { owner, repo } = await params;
-  const { sandbox: sandboxId } = loadSandboxSearchParams(await searchParams);
+  loadSandboxSearchParams(await searchParams);
 
   // Fetch sandbox status and repo metadata in parallel
-  let [repoData] = await Promise.all([
+  const [repoData] = await Promise.all([
     api.repo.getRepoMetadata({ owner, repo }).catch(() => null),
   ]);
 

@@ -56,8 +56,13 @@ export const repoRouter = createTRPCRouter({
           isFork: data.fork,
           isArchived: data.archived,
         };
-      } catch (error: any) {
-        if (error.status === 404) {
+      } catch (error: unknown) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "status" in error &&
+          error.status === 404
+        ) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Repository not found",
