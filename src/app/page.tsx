@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { type Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "OpenCode Web - Run GitHub Repos in Your Browser",
+  description:
+    "Explore and run popular GitHub repositories directly in your browser. Try TypeScript, Python, Rust projects and more.",
+};
 
 const popularRepos = [
   {

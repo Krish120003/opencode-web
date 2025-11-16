@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { type Metadata } from "next";
 import { api, HydrateClient } from "~/trpc/server";
 import { SandboxTerminal } from "./_components/sandbox-terminal-client";
 import { loadSandboxSearchParams } from "~/lib";
@@ -39,6 +40,16 @@ async function SandboxHeader(props: SandboxHeaderProps) {
       </div>
     </div>
   );
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { owner, repo } = await params;
+  return {
+    title: `${owner}/${repo} - OpenCode Web`,
+    description: `Explore and run ${owner}/${repo} in your browser`,
+  };
 }
 
 export default async function RepoPage({ params, searchParams }: PageProps) {
