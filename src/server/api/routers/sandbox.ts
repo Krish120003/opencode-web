@@ -30,7 +30,7 @@ export const sandboxRouter = createTRPCRouter({
             url: `https://github.com/${input.owner}/${input.repo}.git`,
           },
           resources: { vcpus: 2 },
-          timeout: ms("5m"),
+          timeout: ms("30m"),
           ports: [7681],
           runtime: "node22",
         });
